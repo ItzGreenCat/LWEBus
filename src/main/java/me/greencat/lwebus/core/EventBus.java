@@ -3,29 +3,34 @@ package me.greencat.lwebus.core;
 import me.greencat.lwebus.LWEBus;
 import me.greencat.lwebus.core.annotation.EventModule;
 import me.greencat.lwebus.core.exception.EventModuleParameterEvent;
+import me.greencat.lwebus.core.reflectionless.ReflectionlessEventHandler;
 import me.greencat.lwebus.core.type.Event;
-import me.greencat.lwebus.utils.cache.CachePool;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class EventBus {
     private final HashSet<String> cachedElements = new HashSet<>();
-    private final HashMap<String,HashSet<String>> typeCache = new HashMap<String, HashSet<String>>();
-    private final HashMap<String,HashMap<String,Method>> eventModuleCache = new HashMap<String, HashMap<String, Method>>();
+    private final HashMap<String,HashSet<String>> typeCache = new HashMap<>();
+    private final HashMap<String,HashMap<String,Method>> eventModuleCache = new HashMap<>();
     private final CopyOnWriteArrayList<Object> registeredListeners = new CopyOnWriteArrayList<>();
+    private final HashSet<String> reflectionlessCacheRecord = new HashSet<>();
+    private final HashSet<String> reflectionlessHandlerSet = new HashSet<>();
 
     public void register(Object o){
         if(!cachedElements.contains(o.getClass().getName())){
             LWEBus.LOGGER.info("Cached EventListener Class " + o.getClass().getName());
             findDynamicListeners(o);
             cachedElements.add(o.getClass().getName());
+        }
+        if(!reflectionlessCacheRecord.contains(o.getClass().getName())){
+            LWEBus.LOGGER.info("Cached Reflectionless Listener Class " + o.getClass().getName());
+            findReflectionlessEventHandler(o);
+            reflectionlessCacheRecord.add(o.getClass().getName());
         }
         registeredListeners.add(o);
     }
@@ -34,19 +39,17 @@ public class EventBus {
     }
     public void post(Event e){
         if(LWEBus.isLoaded()) {
-            Class<?> superClass = e.getClass().getSuperclass();
-            while(superClass != null) {
-                if (superClass.getName().equals(Event.class.getName())) {
-                    break;
-                } else {
-                    superClass = superClass.getSuperclass();
-                }
-            }
             HashSet<String> classes = typeCache.get(e.getClass().getSimpleName());
             if(classes == null){
                 return;
             }
             for(Object object : registeredListeners){
+                if (e.isCanceled()) {
+                    return;
+                }
+                if(reflectionlessHandlerSet.contains(object.getClass().getName())){
+                    ((ReflectionlessEventHandler)object).invoke(e);
+                }
                 if(classes.contains(object.getClass().getName())){
                     Method method = eventModuleCache.get(object.getClass().getName()).get(e.getClass().getSimpleName());
                     try {
@@ -58,7 +61,18 @@ public class EventBus {
             }
         }
     }
-    public void findDynamicListeners(Object o){
+    private void findReflectionlessEventHandler(Object o){
+        Class<?>[] clazzList = o.getClass().getInterfaces();
+        for(Class<?> clazz : clazzList){
+            if(clazz == ReflectionlessEventHandler.class){
+                reflectionlessHandlerSet.add(o.getClass().getName());
+                LWEBus.LOGGER.info("Added " + o.getClass().getName() + "into Reflectionless Event Cache");
+                return;
+            }
+        }
+        LWEBus.LOGGER.info("Cannont found Reflectionless Listener in Class " + o.getClass().getName());
+    }
+    private void findDynamicListeners(Object o){
         eventModuleCache.put(o.getClass().getName(), new HashMap<>());
         for(Method method : o.getClass().getMethods()){
             if(method.isAnnotationPresent(EventModule.class)){
@@ -93,12 +107,13 @@ public class EventBus {
                         }
                         eventModuleCache.get(o.getClass().getSimpleName()).put(parameter.getType().getSimpleName(),method);
                         typeCache.get(parameter.getType().getSimpleName()).add(o.getClass().getName());
+                        LWEBus.LOGGER.info("EventBus " + this + "added " + o + " into type \"" + parameter.getType().getSimpleName() + "\" cache");
                     }
                 }
             }
         }
     }
-    public void discoverNewEvent(String event){
+    private void discoverNewEvent(String event){
         LWEBus.LOGGER.info("EventBus " + this + "discovered a new event -- " + event + ",add to cache");
         typeCache.put(event, new HashSet<>());
     }
