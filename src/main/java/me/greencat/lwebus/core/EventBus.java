@@ -66,11 +66,11 @@ public class EventBus {
         for(Class<?> clazz : clazzList){
             if(clazz == ReflectionlessEventHandler.class){
                 reflectionlessHandlerSet.add(o.getClass().getName());
-                LWEBus.LOGGER.info("Added " + o.getClass().getName() + "into Reflectionless Event Cache");
+                LWEBus.LOGGER.info("Added " + o.getClass().getName() + " into Reflectionless Event Cache");
                 return;
             }
         }
-        LWEBus.LOGGER.info("Cannont found Reflectionless Listener in Class " + o.getClass().getName());
+        LWEBus.LOGGER.info("Cannot found Reflectionless Listener in Class " + o.getClass().getName());
     }
     private void findDynamicListeners(Object o){
         eventModuleCache.put(o.getClass().getName(), new HashMap<>());
