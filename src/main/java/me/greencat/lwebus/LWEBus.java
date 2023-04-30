@@ -2,15 +2,12 @@ package me.greencat.lwebus;
 
 
 import me.greencat.lwebus.core.EventBus;
-import me.greencat.lwebus.core.reflectionless.ReflectionlessEventHandler;
-import me.greencat.lwebus.core.type.Event;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
+import java.util.logging.LogManager;
+import java.util.logging.Logger;
 
 public class LWEBus {
-    public static Logger LOGGER = LoggerFactory.getLogger(LWEBus.class);
+    public static Logger LOGGER = Logger.getLogger("Light Weight Event Bus");
     public final EventBus EVENT_BUS = new EventBus();
 
     private static final String VERSION = "1.0.0";
