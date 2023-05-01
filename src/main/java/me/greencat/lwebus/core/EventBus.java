@@ -78,7 +78,7 @@ public class EventBus {
             if(method.isAnnotationPresent(EventModule.class)){
                 int parameterCount = method.getParameterCount();
                 if(parameterCount != 1){
-                    throw new EventModuleParameterEvent(method.getName() + " at " + o.getClass().getName() + "requires 1 parameter,But found " + parameterCount + "parameter");
+                    throw new EventModuleParameterEvent(method.getName() + " at " + o.getClass().getName() + " requires 1 parameter,But found " + parameterCount + " parameter");
                 } else {
                     boolean hasParameter = false;
                     Class<?> clazz = method.getParameters()[0].getType();
@@ -105,7 +105,7 @@ public class EventBus {
                         if(typeCache.get(parameter.getType().getSimpleName()) == null){
                             throw new RuntimeException("Cannot create a new HashSet for this event",new NullPointerException(parameter.getType().getSimpleName()));
                         }
-                        eventModuleCache.get(o.getClass().getSimpleName()).put(parameter.getType().getSimpleName(),method);
+                        eventModuleCache.get(o.getClass().getName()).put(parameter.getType().getSimpleName(),method);
                         typeCache.get(parameter.getType().getSimpleName()).add(o.getClass().getName());
                         LWEBus.LOGGER.info("EventBus " + this + "added " + o + " into type \"" + parameter.getType().getSimpleName() + "\" cache");
                     }
