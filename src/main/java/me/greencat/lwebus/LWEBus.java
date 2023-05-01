@@ -10,7 +10,7 @@ public class LWEBus {
     public static Logger LOGGER = Logger.getLogger("Light Weight Event Bus");
     public final EventBus EVENT_BUS = new EventBus();
 
-    private static final String VERSION = "1.0.0";
+    private static final String VERSION = "1.2.0";
     private static LWEBus instance;
     private static boolean isLoaded = false;
     public static void Bootstrap(){
